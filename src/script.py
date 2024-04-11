@@ -13,26 +13,23 @@ if not folder_selected:
 file_list=glob.glob(folder_selected + '/*.xlsx')
 #lista para almacener los archivos
 excel_list = []
-
+#agregar todos los archivos excel a una lista, se elimina las primeras 2 filas de cada archivo de excel
 for file in file_list:
     excel_list.append(pd.read_excel(file, skiprows=2))
     
+#se crea el dataframe excel_merged
 excel_merged = pd.DataFrame()
 
-for excel_file in excel_list:
-    excel_merged=pd.concat([excel_merged, pd.DataFrame.from_records(excel_file)], ignore_index=False)
-#excel_merged=pd.concat(excel_list, ignore_index=False)
+#consolidando todos los archivos excel en un solo dataframe
+excel_merged=pd.concat(excel_list, ignore_index=False)
 
 print(excel_merged.shape)
 print(excel_merged.columns)
+#Seleccionamos solo las columnas que necesitamos para el procesamiento de datos
 excel_merged=excel_merged.loc[:,['Title', 'Wk', 'Thu\nAdm 03-Jan', 'Weekend\nAdm', 'Week\nAdm']]
 
-#excel_merged.groupby('Title')
-
-#print(data2.head(10))
-#excel_merged.groupby('Title')
-
-excel_merged.to_excel('consolidated_file.xlsx')
+#Archivo excel consolidado
+excel_merged.to_excel('consolidado.xlsx')
 
 # Calcular la suma de 'Thu\nAdm 03-Jan' para el día inicial
 initial_day = excel_merged[excel_merged['Wk'] == 1].groupby('Title')['Thu\nAdm 03-Jan'].sum().reset_index()
@@ -52,5 +49,5 @@ result = initial_day.merge(first_weekend, on='Title', how='outer').merge(first_w
 result.columns = ['Title', 'Dia inicial', 'Primer Fin de semana', 'Primera semana', 'Segunda semana']
 
 print(result)
-result.to_excel('res.xlsx')
+result.to_excel('resultado.xlsx')
 #result.to_csv('re.txt', sep=" ", quoting=csv.QUOTE_NONE, escapechar=" ")
