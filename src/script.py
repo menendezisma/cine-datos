@@ -1,8 +1,6 @@
 import pandas as pd
 import glob
-import openpyxl
 from tkinter import filedialog
-import csv
 
 #Usuario seleccionara folder con los archivos
 folder_selected=filedialog.askdirectory()
@@ -31,7 +29,7 @@ excel_merged=excel_merged.loc[:,['Title', 'Wk', 'Thu\nAdm 03-Jan', 'Fri\nAdm 04-
                          'Wed\nAdm 09-Jan', 'Week\nAdm']]
 
 #Archivo excel consolidado
-excel_merged.to_excel('consolidado.xlsx')
+#excel_merged.to_excel('consolidado.xlsx')
 
 # Calcular la suma de 'Thu\nAdm 03-Jan' para el día inicial
 initial_day = excel_merged[excel_merged['Wk'] == 1].groupby('Title')['Thu\nAdm 03-Jan'].sum().reset_index()
@@ -51,23 +49,28 @@ total = excel_merged.groupby('Title')[['Thu\nAdm 03-Jan', 'Fri\nAdm 04-Jan', 'Sa
 total['Total']=total[['Thu\nAdm 03-Jan', 'Fri\nAdm 04-Jan', 'Sat\nAdm 05-Jan', 'Sun\nAdm 06-Jan', 'Weekend\nAdm', 'Mon\nAdm 07-Jan', 'Tue\nAdm 08-Jan', 'Wed\nAdm 09-Jan', 'Week\nAdm']].sum(axis=1)
 total_movie=total[['Title','Total']]
 
-"""
-Calcular la suma de 'Thu\nAdm 03-Jan', 'Fri\nAdm 04-Jan', 'Sat\nAdm 05-Jan', 'Sun\nAdm 06-Jan', 'Weekend\nAdm', 'Mon\nAdm 07-Jan', 'Tue\nAdm 08-Jan', 'Wed\nAdm 09-Jan', 'Week\nAdm' para el valor restante
-remaining = excel_merged[excel_merged['Wk'] >= 3].groupby('Title')[['Thu\nAdm 03-Jan', 'Fri\nAdm 04-Jan', 'Sat\nAdm 05-Jan', 'Sun\nAdm 06-Jan', 'Weekend\nAdm', 'Mon\nAdm 07-Jan', 'Tue\nAdm 08-Jan', 'Wed\nAdm 09-Jan', 'Week\nAdm']].sum().reset_index()
-remaining['remaing_total']=remaining[['Thu\nAdm 03-Jan', 'Fri\nAdm 04-Jan', 'Sat\nAdm 05-Jan', 'Sun\nAdm 06-Jan', 'Weekend\nAdm', 'Mon\nAdm 07-Jan', 'Tue\nAdm 08-Jan', 'Wed\nAdm 09-Jan', 'Week\nAdm']].sum(axis=1)
-remainig_movie=remaining[['Title','remaing_total']]
-print(remainig_movie)
-"""
-
 # Fusionar todos los resultados en un solo DataFrame
 result = initial_day.merge(first_weekend, on='Title', how='outer').merge(first_week, on='Title', how='outer').merge(second_week, on='Title', how='outer').merge(total_movie, on='Title', how='outer')
 result.columns = ['Title', 'Dia inicial', 'Primer Fin de semana', 'Primera semana', 'Segunda semana', 'Total']
+#poner el valor de 0 en los campos donde aparezca NaN
 result = result.fillna(0)
+#calcular el valor restante
 result['Restante']=result['Total']-(result['Primera semana']+result['Segunda semana'])
+#calcular el valor del porcentaje de la primera semana respecto al total
 result['Primera Semana PCT']=(result['Primera semana']/result['Total']*100).round(2).astype(str) + '%'
+#calcular el valor del porcentaje de la segunda semana respecto al total
 result['Segunda semana PCT']=(result['Segunda semana']/result['Total']*100).round(2).astype(str) + '%'
+#calcular valor del porcentaje de restante
 result['Restante PCT']=(result['Restante']/result['Total']*100).round(2).astype(str) + '%'
+#reordenando el dataframe 
 result=result.reindex(columns=['Title', 'Dia inicial', 'Primer Fin de semana', 'Primera semana', 'Primera Semana PCT', 'Segunda semana', 'Segunda semana PCT', 'Restante','Restante PCT','Total'])
 print(result)
-result.to_excel('resultado.xlsx')
-#result.to_csv('re.txt', sep=" ", quoting=csv.QUOTE_NONE, escapechar=" ")
+# Convertir el DataFrame a una cadena con formato tabulado
+txt_output = result.to_string(index=False)
+
+# Escribir la cadena en un archivo de texto
+with open('resultado_ejercicio2.txt', 'w') as file:
+    file.write(txt_output)
+
+#result.to_excel('resultado.xlsx')
+
